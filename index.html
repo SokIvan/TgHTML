@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Мое первое Mini App</title>
-    <!-- Подключаем официальную Telegram Web App библиотеку -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
@@ -24,55 +23,137 @@
             margin: 10px;
             cursor: pointer;
         }
+        .debug {
+            background-color: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            padding: 10px;
+            margin: 20px 0;
+            text-align: left;
+            font-family: monospace;
+            color: #333;
+        }
     </style>
 </head>
 <body>
     <h1>Привет из Mini App!</h1>
-    <p>Ты открыл это приложение из Telegram.</p>
     
-    <div id="user-info">
-        <!-- Сюда мы вставим данные пользователя -->
+    <div id="user-info" class="debug">
+        Загрузка данных пользователя...
     </div>
     
-    <button onclick="sendDataToBot()">Нажми меня!</button>
-    <button onclick="closeApp()">Закрыть</button>
+    <div id="app-status" class="debug">
+        Проверка статуса...
+    </div>
+    
+    <button onclick="sendDataToBot()">📤 Отправить данные боту</button>
+    <button onclick="testWebApp()">🔍 Проверить WebApp</button>
+    <button onclick="closeApp()">❌ Закрыть</button>
 
     <script>
         // Получаем объект WebApp
         const tg = window.Telegram.WebApp;
         
-        // Говорим Telegram, что наше приложение готово к показу. Убирает лоадер.
-        tg.ready();
-        
-        // Разворачиваем приложение на весь экран
-        tg.expand();
-
-        // 1. Получаем информацию о пользователе
-        const user = tg.initDataUnsafe?.user;
-        if (user) {
-            document.getElementById('user-info').innerHTML = `
-                <p>Добро пожаловать, ${user.first_name}!</p>
-                <p>Твой Telegram ID: ${user.id}</p>
-            `;
-        } else {
-            document.getElementById('user-info').innerHTML = '<p>Не удалось получить данные пользователя. Убедись, что приложение открыто внутри Telegram.</p>';
+        // Функция для обновления статуса
+        function updateStatus(message) {
+            document.getElementById('app-status').innerHTML += `<br>➡️ ${message}`;
         }
 
-        // 2. Функция для отправки данных боту
+        // Инициализация
+        updateStatus('WebApp объект получен');
+        
+        // Говорим Telegram, что приложение готово
+        tg.ready();
+        updateStatus('tg.ready() вызван');
+        
+        // Разворачиваем на весь экран
+        tg.expand();
+        updateStatus('tg.expand() вызван');
+
+        // Проверяем, как открыто приложение
+        const initData = tg.initData;
+        const initDataUnsafe = tg.initDataUnsafe;
+        
+        updateStatus(`initData существует: ${!!initData}`);
+        updateStatus(`initDataUnsafe существует: ${!!initDataUnsafe}`);
+
+        // Получаем информацию о пользователе
+        const user = tg.initDataUnsafe?.user;
+        const userDiv = document.getElementById('user-info');
+        
+        if (user) {
+            userDiv.innerHTML = `
+                <strong>✅ Данные пользователя получены:</strong><br>
+                ID: ${user.id}<br>
+                Имя: ${user.first_name} ${user.last_name || ''}<br>
+                Username: ${user.username || 'нет'}<br>
+                Язык: ${user.language_code || 'нет'}<br>
+                <br>
+                <strong>Техническая информация:</strong><br>
+                initDataUnsafe: ${JSON.stringify(tg.initDataUnsafe, null, 2)}
+            `;
+            updateStatus('Данные пользователя загружены');
+        } else {
+            userDiv.innerHTML = '❌ Не удалось получить данные пользователя. Убедись, что приложение открыто через кнопку Menu в Telegram!';
+            updateStatus('⚠️ НЕТ ДАННЫХ ПОЛЬЗОВАТЕЛЯ');
+        }
+
+        // Функция для отправки данных боту
         function sendDataToBot() {
-            // Создаем объект с данными, которые хотим отправить
-            const data = {
-                action: 'button_pressed',
-                message: 'Пользователь нажал на главную кнопку!',
-                user_id: user?.id
-            };
+            updateStatus('Попытка отправки данных...');
             
-            // Преобразуем в строку JSON и отправляем
-            // Важно! sendData работает только если приложение открыто через кнопку Menu
-            tg.sendData(JSON.stringify(data));
+            try {
+                // Проверяем, есть ли метод sendData
+                if (!tg.sendData) {
+                    updateStatus('❌ Ошибка: метод sendData не найден!');
+                    alert('Ошибка: метод sendData недоступен. Приложение открыто не через Telegram?');
+                    return;
+                }
+                
+                // Создаем данные для отправки
+                const data = {
+                    action: 'button_pressed',
+                    message: 'Пользователь нажал на главную кнопку!',
+                    user_id: user?.id,
+                    timestamp: new Date().toISOString()
+                };
+                
+                const jsonString = JSON.stringify(data);
+                updateStatus(`Отправляем данные: ${jsonString}`);
+                
+                // Отправляем
+                tg.sendData(jsonString);
+                
+                updateStatus('✅ Данные отправлены!');
+                // После sendData приложение должно закрыться автоматически
+                
+            } catch (error) {
+                updateStatus(`❌ Ошибка при отправке: ${error.message}`);
+                alert('Ошибка: ' + error.message);
+            }
+        }
+
+        // Тестовая функция
+        function testWebApp() {
+            updateStatus('--- ТЕСТОВАЯ ПРОВЕРКА ---');
             
-            // После отправки Mini App автоматически закроется.
-            // Если не хочешь закрывать, можно использовать другие методы.
+            // Проверяем доступные методы
+            const methods = [];
+            for (let prop in tg) {
+                if (typeof tg[prop] === 'function') {
+                    methods.push(prop);
+                }
+            }
+            updateStatus(`Доступные методы: ${methods.join(', ')}`);
+            
+            // Проверяем свойства
+            updateStatus(`version: ${tg.version}`);
+            updateStatus(`platform: ${tg.platform}`);
+            updateStatus(`colorScheme: ${tg.colorScheme}`);
+            updateStatus(`isExpanded: ${tg.isExpanded}`);
+            updateStatus(`viewportHeight: ${tg.viewportHeight}`);
+            
+            alert('Проверка завершена. Смотри статус в приложении.');
         }
 
         function closeApp() {
