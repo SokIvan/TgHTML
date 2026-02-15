@@ -1,67 +1,102 @@
 <!DOCTYPE html>
-<html>
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mini App</title>
+    <title>Telegram Mini App</title>
+    
+    <!-- Telegram Web App SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <style>
-        /* Твои стили */
-    </style>
+    
+    <!-- Наши стили -->
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <h1>Mini App</h1>
-    
-    <div id="status"></div>
-    
-    <button onclick="sendToBot()" style="padding: 20px; font-size: 20px;">
-        📤 Отправить данные боту
-    </button>
-    
-    <script>
-        const tg = window.Telegram.WebApp;
-        tg.ready();
-        tg.expand();
-        
-        const statusDiv = document.getElementById('status');
-        
-        function log(message) {
-            statusDiv.innerHTML += `<br>➡️ ${message}`;
-        }
-        
-        // Показываем данные пользователя
-        const user = tg.initDataUnsafe?.user;
-        if (user) {
-            statusDiv.innerHTML = `✅ Привет, ${user.first_name}!<br>`;
-            statusDiv.innerHTML += `ID: ${user.id}<br>`;
-        }
-        
-        function sendToBot() {
-            log('Попытка отправки...');
-            
-            // Проверяем доступность sendData
-            if (typeof tg.sendData !== 'function') {
-                log('❌ sendData не доступен!');
-                alert('Ошибка: sendData не доступен');
-                return;
-            }
-            
-            // Формируем данные
-            const data = {
-                action: 'button_pressed',
-                message: 'Привет от пользователя!',
-                user_id: user?.id,
-                timestamp: new Date().toISOString()
-            };
-            
-            const jsonString = JSON.stringify(data);
-            log(`📦 Отправляю: ${jsonString}`);
-            
-            // Отправляем
-            tg.sendData(jsonString);
-            
-            log('✅ Отправлено! Приложение закроется...');
-        }
-    </script>
+    <div class="container">
+        <header class="header">
+            <h1>🚀 Telegram Mini App</h1>
+            <div class="user-badge" id="userBadge">
+                <span class="loading"></span>
+            </div>
+        </header>
+
+        <main>
+            <!-- Карточка пользователя -->
+            <div class="card" id="userCard">
+                <h2>Информация о пользователе</h2>
+                <div class="user-info" id="userInfo">
+                    <div class="skeleton-loading">Загрузка...</div>
+                </div>
+            </div>
+
+            <!-- Кнопки действий -->
+            <div class="card">
+                <h2>Действия</h2>
+                <div class="button-grid">
+                    <button class="btn btn-primary" onclick="App.sendAction('like')">
+                        ❤️ Лайк
+                    </button>
+                    <button class="btn btn-primary" onclick="App.sendAction('share')">
+                        📤 Поделиться
+                    </button>
+                    <button class="btn btn-primary" onclick="App.sendAction('comment')">
+                        💬 Комментарий
+                    </button>
+                    <button class="btn btn-primary" onclick="App.sendAction('save')">
+                        ⭐ Сохранить
+                    </button>
+                </div>
+            </div>
+
+            <!-- Отправка данных -->
+            <div class="card">
+                <h2>Отправить данные</h2>
+                <div class="button-grid">
+                    <button class="btn btn-secondary" onclick="App.sendCustomData()">
+                        📦 Отправить JSON
+                    </button>
+                    <button class="btn btn-secondary" onclick="App.sendUserData()">
+                        👤 Данные пользователя
+                    </button>
+                    <button class="btn btn-secondary" onclick="App.testConnection()">
+                        🔍 Тест API
+                    </button>
+                    <button class="btn btn-secondary" onclick="App.clearLog()">
+                        🗑️ Очистить лог
+                    </button>
+                </div>
+            </div>
+
+            <!-- Лог событий -->
+            <div class="card">
+                <h2>Лог событий</h2>
+                <div class="log-container" id="logContainer">
+                    <div class="log-entry">✅ Приложение загружено</div>
+                </div>
+            </div>
+
+            <!-- Форма для кастомной отправки -->
+            <div class="card" id="customForm" style="display: none;">
+                <h2>Кастомная отправка</h2>
+                <textarea id="customData" class="textarea" placeholder='{"key": "value"}'></textarea>
+                <div class="button-grid">
+                    <button class="btn btn-success" onclick="App.sendCustomJson()">
+                        Отправить
+                    </button>
+                    <button class="btn btn-danger" onclick="App.hideCustomForm()">
+                        Отмена
+                    </button>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>API: <span id="apiStatus">⏳ Проверка...</span></p>
+            <p class="version">v1.0.0</p>
+        </footer>
+    </div>
+
+    <!-- Наш JavaScript -->
+    <script src="js/app.js"></script>
 </body>
 </html>
