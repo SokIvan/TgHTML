@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Мое первое Mini App</title>
+    <!-- Подключаем официальную Telegram Web App библиотеку -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            padding: 20px;
+            text-align: center;
+            background-color: var(--tg-theme-bg-color, #fff);
+            color: var(--tg-theme-text-color, #222);
+        }
+        button {
+            background-color: var(--tg-theme-button-color, #2481cc);
+            color: var(--tg-theme-button-text-color, #fff);
+            border: none;
+            border-radius: 10px;
+            padding: 15px 30px;
+            font-size: 18px;
+            margin: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Привет из Mini App!</h1>
+    <p>Ты открыл это приложение из Telegram.</p>
+    
+    <div id="user-info">
+        <!-- Сюда мы вставим данные пользователя -->
+    </div>
+    
+    <button onclick="sendDataToBot()">Нажми меня!</button>
+    <button onclick="closeApp()">Закрыть</button>
+
+    <script>
+        // Получаем объект WebApp
+        const tg = window.Telegram.WebApp;
+        
+        // Говорим Telegram, что наше приложение готово к показу. Убирает лоадер.
+        tg.ready();
+        
+        // Разворачиваем приложение на весь экран
+        tg.expand();
+
+        // 1. Получаем информацию о пользователе
+        const user = tg.initDataUnsafe?.user;
+        if (user) {
+            document.getElementById('user-info').innerHTML = `
+                <p>Добро пожаловать, ${user.first_name}!</p>
+                <p>Твой Telegram ID: ${user.id}</p>
+            `;
+        } else {
+            document.getElementById('user-info').innerHTML = '<p>Не удалось получить данные пользователя. Убедись, что приложение открыто внутри Telegram.</p>';
+        }
+
+        // 2. Функция для отправки данных боту
+        function sendDataToBot() {
+            // Создаем объект с данными, которые хотим отправить
+            const data = {
+                action: 'button_pressed',
+                message: 'Пользователь нажал на главную кнопку!',
+                user_id: user?.id
+            };
+            
+            // Преобразуем в строку JSON и отправляем
+            // Важно! sendData работает только если приложение открыто через кнопку Menu
+            tg.sendData(JSON.stringify(data));
+            
+            // После отправки Mini App автоматически закроется.
+            // Если не хочешь закрывать, можно использовать другие методы.
+        }
+
+        function closeApp() {
+            tg.close();
+        }
+    </script>
+</body>
+</html>
